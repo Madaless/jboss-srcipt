@@ -1,0 +1,39 @@
+# Ścieżki
+$zipFile = "C:\ścieżka\do\jboss.zip"
+$targetDir = "C:\ścieżka_do_JBoss"
+
+# 0. Usunięcie starego folderu, jeśli istnieje
+if (Test-Path $targetDir) {
+    Write-Host "Usuwanie starego katalogu JBoss..."
+    Remove-Item -Path $targetDir -Recurse -Force
+}
+
+# 1. Wypakowanie zipa
+Write-Host "Rozpakowywanie JBoss..."
+Expand-Archive -Path $zipFile -DestinationPath $targetDir -Force
+
+# 2. Funkcja do zamiany tekstu w plikach
+function Replace-TextInFiles {
+    param(
+        [string]$Path,
+        [string]$OldText,
+        [string]$NewText
+    )
+
+    Get-ChildItem -Path $Path -Recurse -File | ForEach-Object {
+        $content = Get-Content $_.FullName -Raw
+        if ($content -match [regex]::Escape($OldText)) {
+            $content = $content -replace [regex]::Escape($OldText), $NewText
+            Set-Content -Path $_.FullName -Value $content
+            Write-Host "Zmieniono w pliku: $($_.FullName)"
+        }
+    }
+}
+
+Write-Host "Zamiana tekstów..."
+
+# 3. Zamiany wymagane
+Replace-TextInFiles -Path $targetDir -OldText "XE34C" -NewText "YU60HC"
+Replace-TextInFiles -Path $targetDir -OldText "xe63hc" -NewText "YU60HC"
+
+Write-Host "Gotowe."
