@@ -1,51 +1,36 @@
-# Ścieżki
-$zipFile = "C:\ścieżka\do\jboss.zip"
-$targetDir = "C:\ścieżka_do_JBoss"
+@echo off
+REM --- Ścieżki ---
+set ZIP_FILE=C:\ścieżka\do\jboss.zip
+set TARGET_DIR=C:\ścieżka_do_JBoss
 
-# 0. Usunięcie starego folderu, jeśli istnieje
-try {
-    if (Test-Path $targetDir) {
-        Write-Host "Usuwanie starego katalogu JBoss..."
-        Remove-Item -Path $targetDir -Recurse -Force -ErrorAction Stop
-    }
-} catch {
-    Write-Host "Błąd podczas usuwania starego katalogu: $_"
-}
+REM --- Uruchomienie PowerShell z blokowaniem błędów i wyświetlaniem w konsoli ---
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
+"try { ^
+    if (Test-Path '%TARGET_DIR%') { ^
+        Write-Host 'Usuwanie starego katalogu JBoss...'; ^
+        Remove-Item -Path '%TARGET_DIR%' -Recurse -Force -ErrorAction Stop; ^
+    } ^
+} catch { Write-Host 'Błąd podczas usuwania starego katalogu:' $_ } ; ^
+try { ^
+    Write-Host 'Rozpakowywanie JBoss...'; ^
+    Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%TARGET_DIR%' -Force -ErrorAction Stop; ^
+} catch { Write-Host 'Błąd podczas rozpakowywania:' $_ } ; ^
+function Replace-TextInFiles { param([string]$Path,[string]$OldText,[string]$NewText) ^
+    Get-ChildItem -Path $Path -Recurse -File | ForEach-Object { ^
+        try { ^
+            $content = Get-Content $_.FullName -Raw -ErrorAction Stop ; ^
+            if ($content -match [regex]::Escape($OldText)) { ^
+                $content = $content -replace [regex]::Escape($OldText), $NewText ; ^
+                Set-Content -Path $_.FullName -Value $content -ErrorAction Stop ; ^
+                Write-Host 'Zmieniono w pliku:' $_.FullName ; ^
+            } ^
+        } catch { Write-Host 'Błąd w pliku' $_.FullName ':' $_ } ^
+    } ^
+} ; ^
+Write-Host 'Zamiana tekstów...' ; ^
+Replace-TextInFiles -Path '%TARGET_DIR%' -OldText 'XE34C' -NewText 'YU60HC' ; ^
+Replace-TextInFiles -Path '%TARGET_DIR%' -OldText 'xe63hc' -NewText 'YU60HC' ; ^
+Write-Host 'Gotowe.'"
 
-# 1. Wypakowanie zipa
-try {
-    Write-Host "Rozpakowywanie JBoss..."
-    Expand-Archive -Path $zipFile -DestinationPath $targetDir -Force -ErrorAction Stop
-} catch {
-    Write-Host "Błąd podczas rozpakowywania: $_"
-}
-
-# 2. Funkcja do zamiany tekstu w plikach
-function Replace-TextInFiles {
-    param(
-        [string]$Path,
-        [string]$OldText,
-        [string]$NewText
-    )
-
-    Get-ChildItem -Path $Path -Recurse -File | ForEach-Object {
-        try {
-            $content = Get-Content $_.FullName -Raw -ErrorAction Stop
-            if ($content -match [regex]::Escape($OldText)) {
-                $content = $content -replace [regex]::Escape($OldText), $NewText
-                Set-Content -Path $_.FullName -Value $content -ErrorAction Stop
-                Write-Host "Zmieniono w pliku: $($_.FullName)"
-            }
-        } catch {
-            Write-Host "Błąd w pliku $($_.FullName): $_"
-        }
-    }
-}
-
-Write-Host "Zamiana tekstów..."
-
-# 3. Zamiany wymagane
-Replace-TextInFiles -Path $targetDir -OldText "XE34C" -NewText "YU60HC"
-Replace-TextInFiles -Path $targetDir -OldText "xe63hc" -NewText "YU60HC"
-
-Write-Host "Gotowe."
+REM --- Zakończenie ---
+cmd /k
