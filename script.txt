@@ -39,7 +39,9 @@ function Replace-TextInFiles {
     }
 }
 
-Write-Host "Zamiana tekstów..."
-Replace-TextInFiles -Path $targetDir -OldText "XE34C" -NewText "YU60HC"
-Replace-TextInFiles -Path $targetDir -OldText "xe63hc" -NewText "YU60HC"
+# 3. Zamiana tekstów tylko w standalone/configuration
+Write-Host "Zamiana tekstów tylko w standalone/configuration..."
+$confDir = Join-Path $targetDir "standalone\configuration"
+Replace-TextInFiles -Path $confDir -OldText "XE34C" -NewText "YU60HC"
+Replace-TextInFiles -Path $confDir -OldText "xe63hc" -NewText "YU60HC"
 Write-Host "Gotowe."
