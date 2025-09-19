@@ -3,14 +3,22 @@ $zipFile = "C:\ścieżka\do\jboss.zip"
 $targetDir = "C:\ścieżka_do_JBoss"
 
 # 0. Usunięcie starego folderu, jeśli istnieje
-if (Test-Path $targetDir) {
-    Write-Host "Usuwanie starego katalogu JBoss..."
-    Remove-Item -Path $targetDir -Recurse -Force
+try {
+    if (Test-Path $targetDir) {
+        Write-Host "Usuwanie starego katalogu JBoss..."
+        Remove-Item -Path $targetDir -Recurse -Force -ErrorAction Stop
+    }
+} catch {
+    Write-Host "Błąd podczas usuwania starego katalogu: $_"
 }
 
 # 1. Wypakowanie zipa
-Write-Host "Rozpakowywanie JBoss..."
-Expand-Archive -Path $zipFile -DestinationPath $targetDir -Force
+try {
+    Write-Host "Rozpakowywanie JBoss..."
+    Expand-Archive -Path $zipFile -DestinationPath $targetDir -Force -ErrorAction Stop
+} catch {
+    Write-Host "Błąd podczas rozpakowywania: $_"
+}
 
 # 2. Funkcja do zamiany tekstu w plikach
 function Replace-TextInFiles {
@@ -21,11 +29,15 @@ function Replace-TextInFiles {
     )
 
     Get-ChildItem -Path $Path -Recurse -File | ForEach-Object {
-        $content = Get-Content $_.FullName -Raw
-        if ($content -match [regex]::Escape($OldText)) {
-            $content = $content -replace [regex]::Escape($OldText), $NewText
-            Set-Content -Path $_.FullName -Value $content
-            Write-Host "Zmieniono w pliku: $($_.FullName)"
+        try {
+            $content = Get-Content $_.FullName -Raw -ErrorAction Stop
+            if ($content -match [regex]::Escape($OldText)) {
+                $content = $content -replace [regex]::Escape($OldText), $NewText
+                Set-Content -Path $_.FullName -Value $content -ErrorAction Stop
+                Write-Host "Zmieniono w pliku: $($_.FullName)"
+            }
+        } catch {
+            Write-Host "Błąd w pliku $($_.FullName): $_"
         }
     }
 }
