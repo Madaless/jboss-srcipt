@@ -1,0 +1,4 @@
+@echo off
+REM Uruchom PowerShell i pozostaw konsolę otwartą
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ścieżka\do\deploy_jboss.ps1"
+cmd /k
