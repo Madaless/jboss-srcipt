@@ -1,8 +1,9 @@
 # Ścieżki
-$zipFile = "C:\ścieżka\do\jboss.zip"
+$zipFile = "C:\ścieżka\do\jboss.7z"
 $targetDir = "C:\ścieżka_do_JBoss"
+$sevenZip = "C:\Program Files\7-Zip\7z.exe"  # zmień jeśli 7z jest gdzie indziej
 
-# 0. Usunięcie starego folderu
+# 0. Usuń stary katalog
 try {
     if (Test-Path $targetDir) {
         Write-Host "Usuwanie starego katalogu JBoss..."
@@ -12,10 +13,10 @@ try {
     Write-Host "Błąd podczas usuwania starego katalogu:" $_
 }
 
-# 1. Rozpakowanie zipa
+# 1. Rozpakowanie archiwum 7z
 try {
     Write-Host "Rozpakowywanie JBoss..."
-    Expand-Archive -Path $zipFile -DestinationPath $targetDir -Force -ErrorAction Stop
+    & "$sevenZip" x "$zipFile" -o"$targetDir" -y
 } catch {
     Write-Host "Błąd podczas rozpakowywania:" $_
 }
