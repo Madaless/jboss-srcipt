@@ -1,0 +1,50 @@
+# Ścieżki
+$zipFile = "C:\ścieżka\do\jboss.7z"
+$targetDir = "C:\jboss-eap7.2"
+$sevenZip = "C:\Program Files\7-Zip\7z.exe"  # zmień jeśli 7z jest gdzie indziej
+
+# 0. Utwórz folder docelowy, jeśli nie istnieje
+if (-not (Test-Path $targetDir)) { New-Item -Path $targetDir -ItemType Directory | Out-Null }
+
+# 1. Rozpakowanie do tymczasowego podfolderu w targetDir
+$extractDir = Join-Path $targetDir "_extract"
+if (Test-Path $extractDir) { Remove-Item -Path $extractDir -Recurse -Force }
+New-Item -Path $extractDir -ItemType Directory | Out-Null
+
+Write-Host "Rozpakowywanie JBoss..."
+& "$sevenZip" x "$zipFile" -o"$extractDir" -y
+
+# 2. Przeniesienie zawartości wewnętrznego folderu do $targetDir
+$innerDir = Get-ChildItem -Path $extractDir | Where-Object { $_.PSIsContainer } | Select-Object -First 1
+Write-Host "Przenoszenie zawartości $($innerDir.FullName) do $targetDir..."
+Get-ChildItem -Path $innerDir.FullName | ForEach-Object {
+    Move-Item -Path $_.FullName -Destination $targetDir -Force
+}
+
+# Usuń tymczasowy podfolder
+Remove-Item -Path $extractDir -Recurse -Force
+
+# 3. Funkcja do zamiany tekstu w plikach
+function Replace-TextInFiles {
+    param([string]$Path,[string]$OldText,[string]$NewText)
+
+    Get-ChildItem -Path $Path -Recurse -File | ForEach-Object {
+        try {
+            $content = Get-Content $_.FullName -Raw -ErrorAction Stop
+            if ($content -match [regex]::Escape($OldText)) {
+                $content = $content -replace [regex]::Escape($OldText), $NewText
+                Set-Content -Path $_.FullName -Value $content -ErrorAction Stop
+                Write-Host "Zmieniono w pliku: $($_.FullName)"
+            }
+        } catch {
+            Write-Host "Błąd w pliku $($_.FullName): $_"
+        }
+    }
+}
+
+# 4. Zamiana tekstów tylko w standalone/configuration
+$confDir = Join-Path $targetDir "standalone\configuration"
+Write-Host "Zamiana tekstów w $confDir..."
+Replace-TextInFiles -Path $confDir -OldText "XE34C" -NewText "YU60HC"
+Replace-TextInFiles -Path $confDir -OldText "xe63hc" -NewText "YU60HC"
+Write-Host "Gotowe."
